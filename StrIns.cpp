@@ -9,8 +9,8 @@ int main()
 	
 	while (cin>>str>>substr) {
 		char *head = str, *curr = str, *max = str;
-		char *tail = str+10;
-		while (curr < tail && *curr != '\0')
+		
+		while (*curr != '\0')
 		{
 			if (*curr > *max) max = curr;
 			curr++;
