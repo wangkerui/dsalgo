@@ -103,26 +103,17 @@ pesudoequals(char* str1, char* str2)
 int
 main()
 {
-	int key;        /* iterator for keys */
-	int flag = 0;   /* means NO */
 	char* line1 = (char*)malloc( sizeof(char)*MAX_TEXT_LEN );
 	char* line2 = (char*)malloc( sizeof(char)*MAX_TEXT_LEN );
-	char* tmp = (char*)malloc( sizeof(char)*MAX_TEXT_LEN );
 
 	gets(line1);
 	gets(line2);
 
-	rept(key,0,26)
-	{
-		if ( pesudoequals(line1, line2) ) 
-		{
-			flag = 1;
-			break;
-		}
-	}
+	if ( pesudoequals(line1, line2) ) 
+		printf("YES\n");
+	else
+		printf("NO\n");
 
-	free(tmp); free(line2); free(line1);
-	if (flag) printf("YES\n");
-	else printf("NO\n");
+	free(line2); free(line1);
 	return 0;
 }
