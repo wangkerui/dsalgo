@@ -61,6 +61,7 @@ pesudoequals(char* str1, char* str2)
 	if (str1==NULL&&str2!=NULL || str1!=NULL&&str2==NULL) return 0;
 	if (str1==NULL && str2==NULL) return 1;
 
+    /* 分别统计原文和密文中各字母出现的次数 */
 	char *p = str1, *q = str2;
 	short *arr1 = (short*)malloc(sizeof(short)*26); /* count the number of str1 letters */
 	short *arr2 = (short*)malloc(sizeof(short)*26); /* count the number of str2 letters */
@@ -77,6 +78,9 @@ pesudoequals(char* str1, char* str2)
 	while(*p != '\0') {arr1[*p-'A'] += 1; ++p;}
 	while(*q != '\0') {arr2[*q-'A'] += 1; ++q;}
 
+    /* 分别统计原文和密文中各“次数”出现的次数；
+     * 若相同，则YES；否则NO。
+     */
 	short *arr = (short*)malloc(sizeof(short)*MAX_TEXT_LEN);
 	rep(i,MAX_TEXT_LEN)  /* initialize */
 		arr[i] = 0;
