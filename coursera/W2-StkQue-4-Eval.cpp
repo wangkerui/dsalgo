@@ -39,34 +39,22 @@
 #define isnum(c)    (c>='0' && c<='9')
 
 #define MAX_SIZE 600
+#define E 2
 
 using namespace std;
 
-/* string --> int
- * 
- * Return 1 if success; 0 if fail.
- */
-int str2int(string str, int* val)
-{
-	if (str.length() == 0 || !isnum(str.at(0)) )
-		return 0;
-	
-	int tmp = 0;
-	rep(i,str.length())
-		tmp = tmp*10 + str.at(i)-'0';
-	*val = tmp;
-	return 1;
-}
-
 /* 中缀表达式-->后缀表达式 */
-string* convert(string in_order_exp, string* post_order_exp)
+string
+convert(string in_order_exp)
 {
-	char op;    /* 操作符 */
+	char op;                      /* 操作符 */
+	string post_order_exp;        /* 后缀表达式 */
 	stack<char> *convertor = new stack<char>();
 	
 	/* 优先级矩阵 
 	 * *=42 +=43 -=45 /=47 ascii
-	 * 0代表优先级相等；1代表优先级高；-1代表低；2无意义，占位符
+	 * 0：优先级相等；1：优先级高；-1：低；E：占位符
+	 * 两个$行和$列是为索引方便而填充
 	 该矩阵表示的转换规则如下：
 	1.当读到一个操作数时，立即将它放到输出中。操作符则不立即输出，放入栈中。遇到左圆括号也推入栈中。
 	2.如果遇到一个右括号，那么就将栈元素弹出，将符号写出直到遇到一个对应的左括号。但是这个左括号只被弹出，并不输出。
@@ -75,63 +63,59 @@ string* convert(string in_order_exp, string* post_order_exp)
 	*/
 	short priority[6][6] = {
 		/*       *  +  $  -  $  /    */
-		/* * */{ 0, 1, 2, 1, 2, 0},
-		/* + */{-1, 0, 2, 0, 2,-1},
-		/* $ */{ 2, 2, 2, 2, 2, 2},
-		/* - */{-1, 0, 2, 0, 2,-1},
-		/* $ */{ 2, 2, 2, 2, 2, 2},
-		/* / */{ 0, 1, 2, 1, 2, 0}
+		/* * */{ 0, 1, E, 1, E, 0},
+		/* + */{-1, 0, E, 0, E,-1},
+		/* $ */{ E, E, E, E, E, E},
+		/* - */{-1, 0, E, 0, E,-1},
+		/* $ */{ E, E, E, E, E, E},
+		/* / */{ 0, 1, E, 1, E, 0}
 	};
 		
 	// convert
 	int j = 0;
 	int len = in_order_exp.length();
-	for(int i=0; i<len; ++i )
+	post_order_exp = "";
+	rep(i,len)
 	{
 		switch(op = in_order_exp.at(i))
 		{
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9': /* 数值，直接存入表达式 */
-			post_order_exp[j].operator +=(op);
-			if ( i==len-1 || !isnum(in_order_exp.at(i+1)) ) {++j;}
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9': 
+			/* 数值，直接存入表达式 */
+			post_order_exp.operator +=(op);
+			if ( i==len-1 || !isnum(in_order_exp.at(i+1)) ) // 数字之间以空格隔开
+				post_order_exp.operator +=(' ');
 			break;
-		case '(': /* 左括号，直接入栈 */
+		case '(': 
+			/* 左括号，直接入栈 */
 			convertor->push(op);
 			break;
-		case ')': /* 右括号，出栈直至遇到左括号 */
+		case ')': 
+			/* 右括号，出栈直至遇到左括号 */
 			while ( (op=convertor->top()) != '(') 
 			{
 				convertor->pop();
-				post_order_exp[j++].operator =(op);
+				post_order_exp.operator +=(op);
 			}
 			convertor->pop(); /* pop '(' */
 			break;
-		case '+':
-		case '-':
-		case '*':
-		case '/': /* 加减乘除，弹出（左括号以上）且（比自己优先级高或相等）的运算符 */
+		case '+': case '-': case '*': case '/': 
+			/* 加减乘除，弹出（左括号以上）且（比自己优先级高或相等）的运算符 */
 			char top;
 			while ( !convertor->empty() && (top=convertor->top())!='(' && priority[top-'*'][op-'*']>=0) 
 			{
 				convertor->pop();
-				post_order_exp[j++].operator =(top); 
+				post_order_exp.operator +=(top); 
 			}
 			convertor->push(op);
+			break;
 		default:
 			break;
 		}
 	}
-	while(!convertor->empty()) /* 表达式末尾，弹出栈内剩余元素 */
+	while(!convertor->empty()) /* 表达式末尾，弹出栈内剩余元素（符号） */
 	{
-		post_order_exp[j++].operator =(convertor->top());
+		post_order_exp.operator +=(convertor->top());
 		convertor->pop();
 	}
 	
@@ -141,55 +125,69 @@ string* convert(string in_order_exp, string* post_order_exp)
 }
 
 /* 计算后缀表达式 */
-int eval(string* exp)
+int
+eval(string exp)
 {
 	stack<int> *computor = new stack<int>();
-	for (int i = 0; exp[i].length()>0; ++i)
+	int val = 0;
+	int len = exp.length();
+	rep(i,len)
 	{
-		int val1, val2;
-		string str = exp[i];
-		if (str2int(str,&val1))
-			computor->push(val1);
+		char c = exp.at(i);
+		if (isnum(c))
+		{
+			val = val*10 + (c-'0');
+			if (i==len-1 || !isnum(exp.at(i+1)))
+			{
+				computor->push(val);
+				val = 0;
+			}
+		}
 		else
 		{	
-			val1 = computor->top();
-			computor->pop();
-			val2 = computor->top();
-			computor->pop();
-		}
+			if (' '==c) continue;
 
-		switch(str[0])
-		{
-		case '+': computor->push(val2+val1);break;
-		case '-': computor->push(val2-val1);break;
-		case '*': computor->push(val2*val1);break;
-		case '/': computor->push(val2/val1);break;
+			int op1,op2;
+			op1 = computor->top();
+			computor->pop();
+			op2 = computor->top();
+			computor->pop();
+		
+			switch(c)
+			{
+			case '+': computor->push(op2+op1);break;
+			case '-': computor->push(op2-op1);break;
+			case '*': computor->push(op2*op1);break;
+			case '/': computor->push(op2/op1);break;
+			}
 		}
 	}
-	int val = computor->top();
+	int result = computor->top();
 	computor->pop();
 	delete computor;
-	return val;
+	return result;
 }
 
-int main()
+int
+main()
 {
 	int N;
 	string str;
-	string *exp;
+	string exp;
 
 	cin>>N;
 	rep(i,N)
 	{	
-		cin>>str;
+		cin>>str; // 输入中缀表达式
+		
 		//（1）中缀转后缀
-		exp = new string[MAX_SIZE];
-		convert(str, exp);
+		exp = convert(str);
+		
 		//（2）计算
 		int val = eval(exp);
-		delete[] exp;
-
+		
 		cout<<val<<endl;
 	}
 
+	return 0;
 }
