@@ -441,6 +441,7 @@ main()
 	int result = evaluate(post_order_exp, vals);
 	printf("%d\n", result);
 
+	free(vals);
 	rep(i,row)
 		free(matrix[i]);
 	free(matrix);
